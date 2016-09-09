@@ -5,7 +5,7 @@ import * as sinon from 'sinon';
 import { Worker, WorkerConfig } from '../lib/Worker'
 import { Database, Dao, ActionContext } from 'nova-base';
 import { MockDao } from './mocks/Database';
-import { MockQueueService, QueueMessage, queueMessages } from './mocks/QueueService';
+import { MockQueueService, QueueMessage } from './mocks/QueueService';
 import { QueueService, WorkerError } from '../lib/util';
 import { createWorker } from './../index';
 
@@ -21,10 +21,27 @@ let queue: QueueMessage;
 let queue1: QueueMessage;
 let error: Error;
 let errorHandler: any;
+let queueMessages: QueueMessage[];
 
 const queueName: string = 'testQueue';
 
 describe('NOVA-WORKER -> Worker;', () => {
+
+    beforeEach(() => {
+        queueMessages = Array.apply(null, { length: 10 }).map((v, i) => {
+            return {
+                id      : String(i + 1),
+                queue   : queueName,
+                payload : {
+                    id    : String(i + 1),
+                    author: `user${i + 1}`
+                },
+                received: 0,
+                sentOn  : Date.now()
+            };
+        });
+    });
+
     describe('worker should check queue after start;', () => {
         before(done => {
             createAndStartWorker([], 200, done);
