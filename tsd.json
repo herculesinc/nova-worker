@@ -7,6 +7,18 @@
   "installed": {
     "node/node.d.ts": {
       "commit": "7d6547a8a0c3f35ce5de82ba58bfd143c0d20fab"
+    },
+    "mocha/mocha.d.ts": {
+      "commit": "bedf3baa8802a2b6f50cc4d68651df64fd77eaa7"
+    },
+    "chai/chai.d.ts": {
+      "commit": "bedf3baa8802a2b6f50cc4d68651df64fd77eaa7"
+    },
+    "sinon/sinon.d.ts": {
+      "commit": "bedf3baa8802a2b6f50cc4d68651df64fd77eaa7"
+    },
+    "assertion-error/assertion-error.d.ts": {
+      "commit": "bedf3baa8802a2b6f50cc4d68651df64fd77eaa7"
     }
   }
 }

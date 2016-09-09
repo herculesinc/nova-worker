@@ -35,7 +35,7 @@ gulp.task('build', ['compile'], function (cb) {
 // run tests
 gulp.task('test', ['build'], function () {
     return gulp.src('./bin/tests/**/*.spec.js', {read: false})
-        .pipe(mocha({reporter: 'spec', bail: false}))
+        .pipe(mocha({reporter: 'spec', bail: false, timeout: 5000}))
         .on('error', err => {
             if (err && ( !err.message || !err.message.match(/failed/) )) {
                 gutil.log(gutil.colors.red(err.stack));

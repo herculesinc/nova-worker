@@ -27,9 +27,12 @@
     "toobusy-js": "0.5.x"
   },
   "devDependencies": {
+    "chai": "3.5.x",
     "del": "2.2.x",
     "gulp": "3.9.x",
     "gulp-mocha": "2.2.x",
-    "gulp-util": "3.0.x"
+    "gulp-util": "3.0.x",
+    "mocha": "3.0.x",
+    "sinon": "1.17.x"
   }
 }
