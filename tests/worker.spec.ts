@@ -27,7 +27,7 @@ const queueName: string = 'testQueue';
 
 describe('NOVA-WORKER -> Worker;', () => {
 
-    beforeEach(() => {
+    before(() => {
         queueMessages = Array.apply(null, { length: 10 }).map((v, i) => {
             return {
                 id      : String(i + 1),
@@ -271,7 +271,7 @@ describe('NOVA-WORKER -> Worker;', () => {
 
     describe('worker should emmit an error when action return an error;', () => {
         before(done => {
-            minInterval = 200;
+            minInterval = 500;
             queue = queueMessages.find(q => q && q.id === '1');
             queue1 = queueMessages.find(q => q && q.id === '2');
 
@@ -424,20 +424,16 @@ describe('NOVA-WORKER -> Worker;', () => {
             expect((service.receiveMessage as any).callCount).to.be.at.least(queueLength);
         });
 
-        it('service.deleteMessage should be called twice', () => {
-            expect((service.deleteMessage as any).calledTwice).to.be.true;
+        it('service.deleteMessage should not be called', () => {
+            expect((service.deleteMessage as any).notCalled).to.be.true;
         });
 
-        it('action should be called once', () => {
-            expect((action as any).calledOnce).to.be.true;
+        it('action should not be called', () => {
+            expect((action as any).notCalled).to.be.true;
         });
 
-        it('action should be called with expected inputs', () => {
-            expect((action as any).firstCall.calledWithExactly(queue.payload)).to.be.true;
-        });
-
-        it('errorHandler should be called once', () => {
-            expect((errorHandler as any).calledOnce).to.be.true;
+        it('errorHandler should be called', () => {
+            expect((errorHandler as any).called).to.be.true;
         });
 
         it('errorHandler should return WorkerError', () => {
