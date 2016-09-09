@@ -15,7 +15,7 @@ export interface MessageOptions {
 
 // MESSAGES
 // =================================================================================================
-const messages: QueueMessage[] = [
+export const queueMessages: QueueMessage[] = [
     { id: '1', queue: 'testQueue', payload: { id: '1', author: 'user1 '}, received: 0, sentOn: Date.now() },
     undefined,
     { id: '2', queue: 'testQueue', payload: { id: '2', author: 'user1 '}, received: 0, sentOn: Date.now() },
@@ -39,20 +39,30 @@ export class MockQueueService {
 
     messages: QueueMessage[];
 
-    constructor() {
+    constructor(messages = queueMessages) {
         this.messages = messages.slice();
     }
 
     sendMessage(queue: string, payload: any, options?: MessageOptions, callback?: (error: Error) => void) {
-        console.log(`Sending message to '${queue}' queue`);
+        this.messages.push({
+            id: String(Date.now()),
+            queue,
+            payload,
+            received: 0,
+            sentOn: Date.now()
+        });
+        // console.log(`Sending message to '${queue}' queue`);
     }
 
     receiveMessage(queue: string, callback: (error: Error, message: QueueMessage) => void) {
-        callback(undefined, this.messages.shift());
+        let msg = this.messages[0];
+        if (msg) msg.received += 1;
+        callback(undefined, msg);
     }
 
     deleteMessage(message: QueueMessage, callback: (error?: Error) => void) {
-        console.log(`Deleting a message from '${message.queue}' queue`);
+        // console.log(`Deleting a message from '${message.queue}' queue`);
+        this.messages.shift();
         callback();
     }
 }
