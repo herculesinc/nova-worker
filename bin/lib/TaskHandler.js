@@ -5,6 +5,7 @@ const util_1 = require('./util');
 // MODULE VARIABLES
 // =================================================================================================
 const since = nova.util.since;
+;
 // CLASS DEFINITION
 // =================================================================================================
 class TaskHandler {
@@ -17,16 +18,46 @@ class TaskHandler {
         this.executor = options.executor;
         this.logger = options.logger;
         this.onerror = options.onerror;
+        this.status = 1 /* stopped */;
+        this.interval = this.retrieval.minInterval;
     }
     // PUBLIC METHODS
     // --------------------------------------------------------------------------------------------
     start() {
-        this.isRunning = true;
+        if (this.status === 3 /* running */) {
+            throw new TypeError('Cannot start a task handler: task handler is already running');
+        }
+        if (this.status === 2 /* stopping */) {
+            throw new TypeError('Cannot start a task handler: task handler hasn not stopped yet');
+        }
+        this.status = 3 /* running */;
         this.setNextCheck(true);
     }
     stop() {
-        this.isRunning = false;
-        return Promise.resolve();
+        if (this.status === 1 /* stopped */) {
+            throw new TypeError('Cannot start a task handler: task handler is not running');
+        }
+        if (this.status === 2 /* stopping */) {
+            throw new TypeError('Cannot start a task handler: task handler hasn not stopped yet');
+        }
+        this.status = 2 /* stopping */;
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                if (this.status === 1 /* stopped */) {
+                    resolve();
+                }
+                else {
+                    setTimeout(() => {
+                        if (this.status === 1 /* stopped */) {
+                            resolve();
+                        }
+                        else {
+                            reject(new util_1.WorkerError(`Failed to stop a handler for '${this.queue}' queue`));
+                        }
+                    }, this.retrieval.maxInterval);
+                }
+            }, this.retrieval.maxInterval);
+        });
     }
     // PRIVATE METHODS
     // --------------------------------------------------------------------------------------------
@@ -60,23 +91,23 @@ class TaskHandler {
         });
     }
     setNextCheck(immediate = false) {
+        if (this.status !== 3 /* running */) {
+            this.status = 1 /* stopped */;
+            return;
+        }
         if (immediate && !toobusy()) {
             setImmediate(() => {
                 this.checkQueue();
             });
-            this.checkInterval = this.retrieval.minInterval;
+            this.interval = this.retrieval.minInterval;
         }
         else {
-            if (this.checkScheduled)
-                return;
-            this.checkScheduled = true;
             setTimeout(() => {
-                this.checkScheduled = false;
                 this.checkQueue();
-            }, this.checkInterval);
-            this.checkInterval = this.checkInterval + this.checkInterval;
-            if (this.checkInterval > this.retrieval.maxInterval) {
-                this.checkInterval = this.retrieval.maxInterval;
+            }, this.interval);
+            this.interval = this.interval + this.interval;
+            if (this.interval > this.retrieval.maxInterval) {
+                this.interval = this.retrieval.maxInterval;
             }
         }
     }

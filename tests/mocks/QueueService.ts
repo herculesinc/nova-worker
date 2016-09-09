@@ -16,21 +16,21 @@ export interface MessageOptions {
 // MESSAGES
 // =================================================================================================
 const messages: QueueMessage[] = [
-    { id: '1', queue: 'testQueue', payload: { author: 'user1 '}, received: 0, sentOn: Date.now() },
+    { id: '1', queue: 'testQueue', payload: { id: '1', author: 'user1 '}, received: 0, sentOn: Date.now() },
     undefined,
-    { id: '2', queue: 'testQueue', payload: { author: 'user1 '}, received: 0, sentOn: Date.now() },
-    { id: '3', queue: 'testQueue', payload: { author: 'user1 '}, received: 0, sentOn: Date.now() },
-    { id: '4', queue: 'testQueue', payload: { author: 'user1 '}, received: 0, sentOn: Date.now() },
-    undefined,
-    undefined,
+    { id: '2', queue: 'testQueue', payload: { id: '2', author: 'user1 '}, received: 0, sentOn: Date.now() },
+    { id: '3', queue: 'testQueue', payload: { id: '3', author: 'user1 '}, received: 0, sentOn: Date.now() },
+    { id: '4', queue: 'testQueue', payload: { id: '4', author: 'user1 '}, received: 0, sentOn: Date.now() },
     undefined,
     undefined,
-    { id: '5', queue: 'testQueue', payload: { author: 'user1 '}, received: 0, sentOn: Date.now() },
-    { id: '6', queue: 'testQueue', payload: { author: 'user1 '}, received: 0, sentOn: Date.now() },
     undefined,
     undefined,
-    { id: '7', queue: 'testQueue', payload: { author: 'user1 '}, received: 0, sentOn: Date.now() },
-    { id: '8', queue: 'testQueue', payload: { author: 'user1 '}, received: 0, sentOn: Date.now() }
+    { id: '5', queue: 'testQueue', payload: { id: '5', author: 'user1 '}, received: 0, sentOn: Date.now() },
+    { id: '6', queue: 'testQueue', payload: { id: '6', author: 'user1 '}, received: 0, sentOn: Date.now() },
+    undefined,
+    undefined,
+    { id: '7', queue: 'testQueue', payload: { id: '7', author: 'user1 '}, received: 0, sentOn: Date.now() },
+    { id: '8', queue: 'testQueue', payload: { id: '8', author: 'user1 '}, received: 0, sentOn: Date.now() }
 ];
 
 // QUEUE SERVICE CLASS

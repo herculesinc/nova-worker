@@ -91,16 +91,24 @@ export class Worker extends events.EventEmitter {
 
         return Promise.all(promises).then(() => {
             this.logger && this.logger.log('worker stopped', { name: this.name });
-        })
+        });
     }
 
     register<V,T>(queue: string, config: TaskHandlerConfig<V,T>) {
+        // validate inputs
+        if (!queue) throw new TypeError('Cannot register queue handler: queue is undefined');
+        if (typeof queue !== 'string') throw new TypeError('Cannot register queue handler: queue must be a string');
+        if (!config) throw new TypeError('Cannot register queue handler: handler configuration is undefined');
+        if (this.handlers.has(queue)) new TypeError(`Cannot register queue handler: a handler has already been registered for '${queue}' queue`);
 
+        // build an executor
         const options: nova.ExecutionOptions = {
             daoOptions      : config.dao,
             defaultInputs   : config.defaults
         };
         const executor = new nova.Executor(this.context, config.action, config.adapter, options);
+
+        // build and register the handler
         const handler = new TaskHandler({
             client      : this.client,
             queue       : queue,
@@ -109,7 +117,6 @@ export class Worker extends events.EventEmitter {
             logger      : this.logger,
             onerror     : (error) => { this.emit(ERROR_EVENT, error); }
         });
-
         this.handlers.set(queue, handler);
     }
 }

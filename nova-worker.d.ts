@@ -7,7 +7,7 @@ declare module "nova-worker" {
 
     export * from 'nova-base';
 
-    // APPLICATION
+    // WORKER
     // --------------------------------------------------------------------------------------------
     export interface WorkerConfig {
         name            : string;
@@ -25,8 +25,8 @@ declare module "nova-worker" {
 
         register<V,T>(queue: string, config: TaskHandlerConfig<V,T>);
 
-        start(): void;
-        stop(): void;
+        start() : void;
+        stop()  : Promise<any>;
 
         on(event: 'error', callback: (error: Error) => void);
         on(event: 'lag', callback: (lag: number) => void);
@@ -39,6 +39,13 @@ declare module "nova-worker" {
         adapter?    : nova.ActionAdapter<V>;
         action      : nova.Action<V,T>;
         dao?        : nova.DaoOptions;
+        retrieval?  : TaskRetrievalOptions;
+    }
+
+    export interface TaskRetrievalOptions {
+        minInterval?: number;
+        maxInterval?: number;
+        maxRetries?	: number;
     }
 
     // QUEUE SERVICE
@@ -58,14 +65,14 @@ declare module "nova-worker" {
     export interface QueueService {
         sendMessage(queue: string, payload: any, options?: MessageOptions, callback?: (error: Error) => void);
         receiveMessage(queue: string, callback: (error: Error, message: QueueMessage) => void);
-        deleteMessage(message: QueueMessage, callback: (error: Error) => void);
+        deleteMessage(message: QueueMessage, callback: (error?: Error) => void);
     }
 
     // LOAD CONTROLLER
     // --------------------------------------------------------------------------------------------
     export interface LoadControllerConfig {
-        interval: number;
-        maxLag  : number;
+        interval    : number;
+        maxLag      : number;
     }
 
     // PUBLIC FUNCTIONS

@@ -32,4 +32,4 @@ worker.on('error', (error) => {
 worker.start();
 setTimeout(function() {
     worker.stop();
-}, 30 * 1000);
+}, 15 * 1000);

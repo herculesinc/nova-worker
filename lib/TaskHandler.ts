@@ -9,32 +9,35 @@ import { QueueService, QueueMessage, WorkerError, TaskRetrievalOptions } from '.
 // =================================================================================================
 const since = nova.util.since;
 
-// INTERFACES
+// ENUMS AND INTERFACES
 // =================================================================================================
 export interface HandlerOptions {
-    client          : QueueService;
-    queue           : string;
-    retrieval       : TaskRetrievalOptions;
-    executor        : nova.Executor<any,any>;
-    logger          : nova.Logger;
-    onerror         : (error: Error) => void;
+    client      : QueueService;
+    queue       : string;
+    retrieval   : TaskRetrievalOptions;
+    executor    : nova.Executor<any,any>;
+    logger      : nova.Logger;
+    onerror     : (error: Error) => void;
 }
+
+const enum TaskHandlerStatus {
+    stopped = 1, stopping, running
+};
 
 // CLASS DEFINITION
 // =================================================================================================
 export class TaskHandler {
 
-    client          : QueueService;
-    queue           : string;
-    retrieval       : TaskRetrievalOptions;
+    client      : QueueService;
+    queue       : string;
+    retrieval   : TaskRetrievalOptions;
 
-    executor        : nova.Executor<any,any>;
-    logger?         : nova.Logger;
-    onerror         : (error: Error) => void;
+    executor    : nova.Executor<any,any>;
+    logger?     : nova.Logger;
+    onerror     : (error: Error) => void;
 
-    isRunning       : boolean;
-    checkInterval   : number;
-    checkScheduled  : boolean;
+    status      : TaskHandlerStatus;
+    interval    : number;
 
     // CONSTRUCTOR
     // --------------------------------------------------------------------------------------------
@@ -47,18 +50,53 @@ export class TaskHandler {
         this.executor = options.executor;
         this.logger = options.logger;
         this.onerror = options.onerror;
+
+        this.status = TaskHandlerStatus.stopped;
+        this.interval = this.retrieval.minInterval;
     }
 
     // PUBLIC METHODS
     // --------------------------------------------------------------------------------------------
     start() {
-        this.isRunning = true;
+        if (this.status === TaskHandlerStatus.running) {
+            throw new TypeError('Cannot start a task handler: task handler is already running');
+        }
+
+        if (this.status === TaskHandlerStatus.stopping) {
+            throw new TypeError('Cannot start a task handler: task handler hasn not stopped yet');
+        }
+
+        this.status = TaskHandlerStatus.running;
         this.setNextCheck(true);
     }
 
     stop(): Promise<void> {
-        this.isRunning = false;
-        return Promise.resolve();
+        if (this.status === TaskHandlerStatus.stopped) {
+            throw new TypeError('Cannot start a task handler: task handler is not running');
+        }
+
+        if (this.status === TaskHandlerStatus.stopping) {
+            throw new TypeError('Cannot start a task handler: task handler hasn not stopped yet');
+        }
+
+        this.status = TaskHandlerStatus.stopping;
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                if (this.status === TaskHandlerStatus.stopped) {
+                    resolve();
+                }
+                else {
+                    setTimeout(() => {
+                        if (this.status === TaskHandlerStatus.stopped) {
+                            resolve();
+                        }
+                        else {
+                            reject(new WorkerError(`Failed to stop a handler for '${this.queue}' queue`));
+                        }
+                    }, this.retrieval.maxInterval);
+                }
+            }, this.retrieval.maxInterval);
+        });
     }
 
     // PRIVATE METHODS
@@ -102,24 +140,26 @@ export class TaskHandler {
 
 	private setNextCheck(immediate = false) {
 
+        if (this.status !== TaskHandlerStatus.running) {
+            this.status = TaskHandlerStatus.stopped;
+            return;
+        }
+
         if (immediate && !toobusy()) {
             setImmediate(() => {
                 this.checkQueue();
             });
 
-            this.checkInterval = this.retrieval.minInterval;
+            this.interval = this.retrieval.minInterval;
         }
         else {
-            if (this.checkScheduled) return;
-            this.checkScheduled = true;
             setTimeout(() => {	
-                this.checkScheduled = false;
                 this.checkQueue(); 
-            }, this.checkInterval);
+            }, this.interval);
 
-            this.checkInterval = this.checkInterval + this.checkInterval;
-            if (this.checkInterval > this.retrieval.maxInterval) {
-                this.checkInterval = this.retrieval.maxInterval;
+            this.interval = this.interval + this.interval;
+            if (this.interval > this.retrieval.maxInterval) {
+                this.interval = this.retrieval.maxInterval;
             }    
         }
 	}

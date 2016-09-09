@@ -56,11 +56,22 @@ class Worker extends events.EventEmitter {
         });
     }
     register(queue, config) {
+        // validate inputs
+        if (!queue)
+            throw new TypeError('Cannot register queue handler: queue is undefined');
+        if (typeof queue !== 'string')
+            throw new TypeError('Cannot register queue handler: queue must be a string');
+        if (!config)
+            throw new TypeError('Cannot register queue handler: handler configuration is undefined');
+        if (this.handlers.has(queue))
+            new TypeError(`Cannot register queue handler: a handler has already been registered for '${queue}' queue`);
+        // build an executor
         const options = {
             daoOptions: config.dao,
             defaultInputs: config.defaults
         };
         const executor = new nova.Executor(this.context, config.action, config.adapter, options);
+        // build and register the handler
         const handler = new TaskHandler_1.TaskHandler({
             client: this.client,
             queue: queue,
