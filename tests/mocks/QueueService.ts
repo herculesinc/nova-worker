@@ -51,7 +51,8 @@ export class MockQueueService {
         callback(undefined, this.messages.shift());
     }
 
-    deleteMessage(message: QueueMessage, callback: (error: Error) => void) {
+    deleteMessage(message: QueueMessage, callback: (error?: Error) => void) {
         console.log(`Deleting a message from '${message.queue}' queue`);
+        callback();
     }
 }

@@ -5,6 +5,7 @@ const events = require('events');
 const toobusy = require('toobusy-js');
 const nova = require('nova-base');
 const TaskHandler_1 = require('./TaskHandler');
+const index_1 = require('./../index');
 // MODULE VARIABLES
 // =================================================================================================
 const ERROR_EVENT = 'error';
@@ -57,9 +58,17 @@ class Worker extends events.EventEmitter {
     register(queue, config) {
         const options = {
             daoOptions: config.dao,
+            defaultInputs: config.defaults
         };
         const executor = new nova.Executor(this.context, config.action, config.adapter, options);
-        const handler = new TaskHandler_1.TaskHandler(this.client, queue, undefined, executor);
+        const handler = new TaskHandler_1.TaskHandler({
+            client: this.client,
+            queue: queue,
+            retrieval: Object.assign({}, index_1.defaults.RETRIEVAL, config.retrieval),
+            executor: executor,
+            logger: this.logger,
+            onerror: (error) => { this.emit(ERROR_EVENT, error); }
+        });
         this.handlers.set(queue, handler);
     }
 }

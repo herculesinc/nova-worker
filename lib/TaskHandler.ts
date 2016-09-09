@@ -3,15 +3,21 @@
 import { isError } from 'util';
 import * as nova from 'nova-base';
 import * as toobusy from 'toobusy-js';
-import { QueueService, QueueMessage } from './util';
-import { defaults } from './../index';
+import { QueueService, QueueMessage, WorkerError, TaskRetrievalOptions } from './util';
+
+// MODULE VARIABLES
+// =================================================================================================
+const since = nova.util.since;
 
 // INTERFACES
 // =================================================================================================
-interface RetrievalOptions {
-	minInterval?    : number;
-	maxInterval?	: number;
-	maxRetries?		: number;
+export interface HandlerOptions {
+    client          : QueueService;
+    queue           : string;
+    retrieval       : TaskRetrievalOptions;
+    executor        : nova.Executor<any,any>;
+    logger          : nova.Logger;
+    onerror         : (error: Error) => void;
 }
 
 // CLASS DEFINITION
@@ -20,9 +26,11 @@ export class TaskHandler {
 
     client          : QueueService;
     queue           : string;
+    retrieval       : TaskRetrievalOptions;
 
-    options         : RetrievalOptions;
     executor        : nova.Executor<any,any>;
+    logger?         : nova.Logger;
+    onerror         : (error: Error) => void;
 
     isRunning       : boolean;
     checkInterval   : number;
@@ -30,20 +38,22 @@ export class TaskHandler {
 
     // CONSTRUCTOR
     // --------------------------------------------------------------------------------------------
-    constructor(client: QueueService, queue: string, options: RetrievalOptions, executor: nova.Executor<any,any>) {
+    constructor(options: HandlerOptions) {
 
-        this.client = client;
-        this.queue = queue;
+        this.client = options.client;
+        this.queue = options.queue;
+        this.retrieval = options.retrieval;
 
-        this.options = defaults.RETRIEVAL;
-        this.executor = executor;
+        this.executor = options.executor;
+        this.logger = options.logger;
+        this.onerror = options.onerror;
     }
 
     // PUBLIC METHODS
     // --------------------------------------------------------------------------------------------
     start() {
         this.isRunning = true;
-        this.checkQueue();
+        this.setNextCheck(true);
     }
 
     stop(): Promise<void> {
@@ -54,42 +64,39 @@ export class TaskHandler {
     // PRIVATE METHODS
     // --------------------------------------------------------------------------------------------
     private checkQueue() {
-        
-        // get message from queue
+        const start = process.hrtime();
+
         this.client.receiveMessage(this.queue, (error, message) => {
 
             if (error) {
-                // report error
+                this.onerror(new WorkerError(`Failed to retrieve a task from '${this.queue}' queue`, error));
+                return this.setNextCheck();
             }
 
+            // if there are no messages in the queue, schedule the next check and return
             if (!message) {
-                this.setNextCheck();
+                return this.setNextCheck();
             }
-            else {
-                this.setNextCheck(true);
-                if (message.received > this.options.maxRetries) {
-                    this.client.deleteMessage(message, (error) => {
-                        // report an error
-                    });
-                }
-                else {
-                    const inputs = parseMessagePayload(message);
-                    if (isError(inputs)) {
-                        // delete message from queue
-                        // report the error
-                    }
 
-                    this.executor.execute(inputs).then(() => {
-                        // remove the message from the queue
-                        this.client.deleteMessage(message, (error) => {
-                            // report an error
-                        });
-                    })
-                    .catch((error) => {
-                        // report the error
-                    });
-                }
+            this.logger && this.logger.debug(`Retrieved a task from '${this.queue}' queue`);
+
+            // immediately check for the next message
+            this.setNextCheck(true);
+
+            // if the message has been retrieved too many times, just delete it
+            if (message.received > this.retrieval.maxRetries) {
+                this.logger && this.logger.debug(`Deleting a task from '${this.queue}' queue after ${message.received - 1} unsuccessful attempts`);
+                return this.deleteMessage(message);
             }
+
+            // execute the action, and remove the message from the queue if all went well
+            this.executor.execute(message.payload).then(() => {
+                this.deleteMessage(message);
+                this.logger && this.logger.log('task completed', { queue: this.queue, time: since(start) });
+            })
+            .catch((error) => {
+                this.onerror(new WorkerError(`Failed to process a task from '${this.queue}' queue`, error));
+            });
         });
     }
 
@@ -100,7 +107,7 @@ export class TaskHandler {
                 this.checkQueue();
             });
 
-            this.checkInterval = this.options.minInterval;
+            this.checkInterval = this.retrieval.minInterval;
         }
         else {
             if (this.checkScheduled) return;
@@ -111,20 +118,20 @@ export class TaskHandler {
             }, this.checkInterval);
 
             this.checkInterval = this.checkInterval + this.checkInterval;
-            if (this.checkInterval > this.options.maxInterval) {
-                this.checkInterval = this.options.maxInterval;
+            if (this.checkInterval > this.retrieval.maxInterval) {
+                this.checkInterval = this.retrieval.maxInterval;
             }    
         }
 	}
-}
 
-// HELPER FUNCTIONS
-// =================================================================================================
-function parseMessagePayload(message: QueueMessage): any {
-    try {
-        return JSON.parse(message.payload);
-    }
-    catch (error) {
-        return error;
+    private deleteMessage(message: QueueMessage) {
+        this.client.deleteMessage(message, (error) => {
+            if (error) {
+                this.onerror(new WorkerError(`Failed to delete a task from '${this.queue}' queue`, error));
+            }
+            else {
+                this.logger && this.logger.debug(`Deleted a task from '${this.queue}' queue`);
+            }
+        });
     }
 }

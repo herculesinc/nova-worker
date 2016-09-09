@@ -3,6 +3,7 @@
 import { createWorker } from './../index';
 import { MockDatabase } from './mocks/Database';
 import { MockQueueService } from './mocks/QueueService';
+import { MockNotifier } from './mocks/Notifier';
 import { MockLogger } from './mocks/Logger';
 import { helloWorldAction } from './actions';
 
@@ -12,6 +13,7 @@ const worker = createWorker({
     name            : 'Test Worker',
     queueService    : new MockQueueService(),
     database        : new MockDatabase(),
+    notifier        : new MockNotifier(),
     logger          : new MockLogger()
 });
 

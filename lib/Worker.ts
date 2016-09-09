@@ -4,7 +4,8 @@ import * as events from 'events';
 import * as toobusy from 'toobusy-js';
 import * as nova from 'nova-base';
 import { TaskHandler } from './TaskHandler';
-import { QueueService } from './util';
+import { QueueService, TaskRetrievalOptions } from './util';
+import { defaults } from './../index';
 
 // MODULE VARIABLES
 // =================================================================================================
@@ -29,6 +30,7 @@ export interface TaskHandlerConfig<V,T> {
     adapter?        : nova.ActionAdapter<V>;
     action          : nova.Action<V,T>;
     dao?            : nova.DaoOptions;
+    retrieval?      : TaskRetrievalOptions;
 }
 
 // CLASS DEFINITION
@@ -95,10 +97,18 @@ export class Worker extends events.EventEmitter {
     register<V,T>(queue: string, config: TaskHandlerConfig<V,T>) {
 
         const options: nova.ExecutionOptions = {
-            daoOptions  : config.dao,
+            daoOptions      : config.dao,
+            defaultInputs   : config.defaults
         };
         const executor = new nova.Executor(this.context, config.action, config.adapter, options);
-        const handler = new TaskHandler(this.client, queue, undefined, executor);
+        const handler = new TaskHandler({
+            client      : this.client,
+            queue       : queue,
+            retrieval   : Object.assign({}, defaults.RETRIEVAL, config.retrieval),
+            executor    : executor,
+            logger      : this.logger,
+            onerror     : (error) => { this.emit(ERROR_EVENT, error); }
+        });
 
         this.handlers.set(queue, handler);
     }

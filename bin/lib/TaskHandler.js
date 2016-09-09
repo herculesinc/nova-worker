@@ -1,25 +1,28 @@
 "use strict";
-// IMPORTS
-// =================================================================================================
-const util_1 = require('util');
+const nova = require('nova-base');
 const toobusy = require('toobusy-js');
-const index_1 = require('./../index');
+const util_1 = require('./util');
+// MODULE VARIABLES
+// =================================================================================================
+const since = nova.util.since;
 // CLASS DEFINITION
 // =================================================================================================
 class TaskHandler {
     // CONSTRUCTOR
     // --------------------------------------------------------------------------------------------
-    constructor(client, queue, options, executor) {
-        this.client = client;
-        this.queue = queue;
-        this.options = index_1.defaults.RETRIEVAL;
-        this.executor = executor;
+    constructor(options) {
+        this.client = options.client;
+        this.queue = options.queue;
+        this.retrieval = options.retrieval;
+        this.executor = options.executor;
+        this.logger = options.logger;
+        this.onerror = options.onerror;
     }
     // PUBLIC METHODS
     // --------------------------------------------------------------------------------------------
     start() {
         this.isRunning = true;
-        this.checkQueue();
+        this.setNextCheck(true);
     }
     stop() {
         this.isRunning = false;
@@ -28,35 +31,32 @@ class TaskHandler {
     // PRIVATE METHODS
     // --------------------------------------------------------------------------------------------
     checkQueue() {
-        // get message from queue
+        const start = process.hrtime();
         this.client.receiveMessage(this.queue, (error, message) => {
             if (error) {
+                this.onerror(new util_1.WorkerError(`Failed to retrieve a task from '${this.queue}' queue`, error));
+                return this.setNextCheck();
             }
+            // if there are no messages in the queue, schedule the next check and return
             if (!message) {
-                this.setNextCheck();
+                return this.setNextCheck();
             }
-            else {
-                this.setNextCheck(true);
-                if (message.received > this.options.maxRetries) {
-                    this.client.deleteMessage(message, (error) => {
-                        // report an error
-                    });
-                }
-                else {
-                    const inputs = parseMessagePayload(message);
-                    if (util_1.isError(inputs)) {
-                    }
-                    this.executor.execute(inputs).then(() => {
-                        // remove the message from the queue
-                        this.client.deleteMessage(message, (error) => {
-                            // report an error
-                        });
-                    })
-                        .catch((error) => {
-                        // report the error
-                    });
-                }
+            this.logger && this.logger.debug(`Retrieved a task from '${this.queue}' queue`);
+            // immediately check for the next message
+            this.setNextCheck(true);
+            // if the message has been retrieved too many times, just delete it
+            if (message.received > this.retrieval.maxRetries) {
+                this.logger && this.logger.debug(`Deleting a task from '${this.queue}' queue after ${message.received - 1} unsuccessful attempts`);
+                return this.deleteMessage(message);
             }
+            // execute the action, and remove the message from the queue if all went well
+            this.executor.execute(message.payload).then(() => {
+                this.deleteMessage(message);
+                this.logger && this.logger.log('task completed', { queue: this.queue, time: since(start) });
+            })
+                .catch((error) => {
+                this.onerror(new util_1.WorkerError(`Failed to process a task from '${this.queue}' queue`, error));
+            });
         });
     }
     setNextCheck(immediate = false) {
@@ -64,7 +64,7 @@ class TaskHandler {
             setImmediate(() => {
                 this.checkQueue();
             });
-            this.checkInterval = this.options.minInterval;
+            this.checkInterval = this.retrieval.minInterval;
         }
         else {
             if (this.checkScheduled)
@@ -75,21 +75,21 @@ class TaskHandler {
                 this.checkQueue();
             }, this.checkInterval);
             this.checkInterval = this.checkInterval + this.checkInterval;
-            if (this.checkInterval > this.options.maxInterval) {
-                this.checkInterval = this.options.maxInterval;
+            if (this.checkInterval > this.retrieval.maxInterval) {
+                this.checkInterval = this.retrieval.maxInterval;
             }
         }
     }
+    deleteMessage(message) {
+        this.client.deleteMessage(message, (error) => {
+            if (error) {
+                this.onerror(new util_1.WorkerError(`Failed to delete a task from '${this.queue}' queue`, error));
+            }
+            else {
+                this.logger && this.logger.debug(`Deleted a task from '${this.queue}' queue`);
+            }
+        });
+    }
 }
 exports.TaskHandler = TaskHandler;
-// HELPER FUNCTIONS
-// =================================================================================================
-function parseMessagePayload(message) {
-    try {
-        return JSON.parse(message.payload);
-    }
-    catch (error) {
-        return error;
-    }
-}
 //# sourceMappingURL=TaskHandler.js.map
