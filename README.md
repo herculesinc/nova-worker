@@ -1,4 +1,4 @@
-# Nova
+# Nova-Worker
 Worker module for Nova API framework.
 
 ## License
