@@ -2,7 +2,7 @@
 // =================================================================================================
 import { createWorker } from './../index';
 import { MockDatabase } from './mocks/Database';
-import { MockQueueService } from './mocks/QueueService';
+import { MockDispatcher } from './mocks/Dispatcher';
 import { MockNotifier } from './mocks/Notifier';
 import { MockLogger } from './mocks/Logger';
 import { helloWorldAction } from './actions';
@@ -10,11 +10,11 @@ import { helloWorldAction } from './actions';
 // WORKER
 // =================================================================================================
 const worker = createWorker({
-    name            : 'Test Worker',
-    queueService    : new MockQueueService(),
-    database        : new MockDatabase(),
-    notifier        : new MockNotifier(),
-    logger          : new MockLogger()
+    name        : 'Test Worker',
+    dispatcher  : new MockDispatcher(),
+    database    : new MockDatabase(),
+    notifier    : new MockNotifier(),
+    logger      : new MockLogger()
 });
 
 worker.register('testQueue', {

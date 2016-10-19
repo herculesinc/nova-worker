@@ -1,6 +1,6 @@
 {
   "name": "nova-worker",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Worker for Nova API framework",
   "keywords": [
     "nova",
@@ -23,7 +23,7 @@
     "node": "6.4.x"
   },
   "dependencies": {
-    "nova-base": "0.6.x",
+    "nova-base": "0.7.x",
     "toobusy-js": "0.5.x"
   },
   "devDependencies": {

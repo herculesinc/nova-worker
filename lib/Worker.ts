@@ -4,7 +4,7 @@ import * as events from 'events';
 import * as toobusy from 'toobusy-js';
 import * as nova from 'nova-base';
 import { TaskHandler } from './TaskHandler';
-import { QueueService, TaskRetrievalOptions } from './util';
+import { TaskRetrievalOptions } from './util';
 import { defaults } from './../index';
 
 // MODULE VARIABLES
@@ -16,10 +16,9 @@ const LAG_EVENT = 'lag';
 // =================================================================================================
 export interface WorkerConfig {
     name            : string;
-    queueService    : QueueService;
+    dispatcher      : nova.Dispatcher;
     database        : nova.Database;
     cache?          : nova.Cache;
-    dispatcher?     : nova.Dispatcher;
     notifier?       : nova.Notifier;
     logger?         : nova.Logger;
     settings?       : any;
@@ -38,7 +37,7 @@ export interface TaskHandlerConfig<V,T> {
 export class Worker extends events.EventEmitter {
 
     name        : string;
-    client      : QueueService;
+    dispatcher  : nova.Dispatcher;
     logger      : nova.Logger;
     context     : nova.ExecutorContext;
     handlers    : Map<string, TaskHandler>;
@@ -53,7 +52,7 @@ export class Worker extends events.EventEmitter {
 
         // initialize basic instance variables
         this.name = options.name;
-        this.client = options.queueService;
+        this.dispatcher = options.dispatcher;
         this.logger = options.logger;
         this.handlers = new Map();
 
@@ -110,7 +109,7 @@ export class Worker extends events.EventEmitter {
 
         // build and register the handler
         const handler = new TaskHandler({
-            client      : this.client,
+            dispatcher  : this.dispatcher,
             queue       : queue,
             retrieval   : Object.assign({}, defaults.RETRIEVAL, config.retrieval),
             executor    : executor,
@@ -131,13 +130,7 @@ function validateOptions(options: WorkerConfig): WorkerConfig {
     if (typeof options.name !== 'string' || options.name.trim().length === 0)
         throw new TypeError('Cannot create a worker: name must be a non-empty string');
 
-    if (!options.queueService) throw new TypeError('Cannot create a worker: queue service is undefined');
-    if (typeof options.queueService.sendMessage !== 'function')
-        throw new TypeError('Cannot create a worker: queue service is invalid');
-    if (typeof options.queueService.receiveMessage !== 'function')
-        throw new TypeError('Cannot create a worker: queue service is invalid');
-    if (typeof options.queueService.deleteMessage !== 'function')
-        throw new TypeError('Cannot create a worker: queue service is invalid');
-
+    if (!options.dispatcher) throw new TypeError('Cannot create a worker: dispatcher is undefined');
+    
     return options;
 }

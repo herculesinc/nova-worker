@@ -3,17 +3,17 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 
 import { Worker, WorkerConfig } from '../lib/Worker'
-import { Database, Dao, ActionContext } from 'nova-base';
+import { Database, Dao, ActionContext, Dispatcher, QueueMessage } from 'nova-base';
 import { MockDao } from './mocks/Database';
-import { MockQueueService, QueueMessage } from './mocks/QueueService';
-import { QueueService, WorkerError } from '../lib/util';
+import { MockDispatcher } from './mocks/Dispatcher';
+import { WorkerError } from '../lib/util';
 import { createWorker } from './../index';
 
 let dao: Dao;
 let database: Database;
 let options: WorkerConfig;
 let worker: Worker;
-let service: QueueService;
+let dispatcher: Dispatcher;
 let action: any;
 let minInterval: number;
 let queueLength: number;
@@ -49,16 +49,16 @@ describe('NOVA-WORKER -> Worker;', () => {
             worker.stop().then(done);
         });
 
-        it('service.sendMessage should not be called', () => {
-            expect((service.sendMessage as any).notCalled).to.be.true;
+        it('dispatcher.sendMessage should not be called', () => {
+            expect((dispatcher.sendMessage as any).notCalled).to.be.true;
         });
 
-        it('service.receiveMessage should be called once', () => {
-            expect((service.receiveMessage as any).calledOnce).to.be.true;
+        it('dispatcher.receiveMessage should be called once', () => {
+            expect((dispatcher.receiveMessage as any).calledOnce).to.be.true;
         });
 
-        it('service.deleteMessage should not be called', () => {
-            expect((service.deleteMessage as any).notCalled).to.be.true;
+        it('dispatcher.deleteMessage should not be called', () => {
+            expect((dispatcher.deleteMessage as any).notCalled).to.be.true;
         });
 
         it('action should not be called', () => {
@@ -75,16 +75,16 @@ describe('NOVA-WORKER -> Worker;', () => {
             }, minInterval * 4);
         });
 
-        it('service.sendMessage should not be called', () => {
-            expect((service.sendMessage as any).notCalled).to.be.true;
+        it('dispatcher.sendMessage should not be called', () => {
+            expect((dispatcher.sendMessage as any).notCalled).to.be.true;
         });
 
-        it('service.receiveMessage should be called 5 times', () => {
-            expect((service.receiveMessage as any).callCount).to.equal(5);
+        it('dispatcher.receiveMessage should be called 5 times', () => {
+            expect((dispatcher.receiveMessage as any).callCount).to.equal(5);
         });
 
-        it('service.deleteMessage should not be called', () => {
-            expect((service.deleteMessage as any).notCalled).to.be.true;
+        it('dispatcher.deleteMessage should not be called', () => {
+            expect((dispatcher.deleteMessage as any).notCalled).to.be.true;
         });
 
         it('action should not be called', () => {
@@ -103,16 +103,16 @@ describe('NOVA-WORKER -> Worker;', () => {
             }, minInterval);
         });
 
-        it('service.sendMessage should not be called', () => {
-            expect((service.sendMessage as any).notCalled).to.be.true;
+        it('dispatcher.sendMessage should not be called', () => {
+            expect((dispatcher.sendMessage as any).notCalled).to.be.true;
         });
 
-        it('service.receiveMessage should be called', () => {
-            expect((service.receiveMessage as any).called).to.be.true;
+        it('dispatcher.receiveMessage should be called', () => {
+            expect((dispatcher.receiveMessage as any).called).to.be.true;
         });
 
-        it('service.deleteMessage should be called once', () => {
-            expect((service.deleteMessage as any).calledOnce).to.be.true;
+        it('dispatcher.deleteMessage should be called once', () => {
+            expect((dispatcher.deleteMessage as any).calledOnce).to.be.true;
         });
 
         it('action should be called once', () => {
@@ -137,16 +137,16 @@ describe('NOVA-WORKER -> Worker;', () => {
             }, minInterval * 4);
         });
 
-        it('service.sendMessage should be called once', () => {
-            expect((service.sendMessage as any).calledOnce).to.be.true;
+        it('dispatcher.sendMessage should be called once', () => {
+            expect((dispatcher.sendMessage as any).calledOnce).to.be.true;
         });
 
-        it('service.receiveMessage should be called', () => {
-            expect((service.receiveMessage as any).called).to.be.true;
+        it('dispatcher.receiveMessage should be called', () => {
+            expect((dispatcher.receiveMessage as any).called).to.be.true;
         });
 
-        it('service.deleteMessage should be called once', () => {
-            expect((service.deleteMessage as any).calledOnce).to.be.true;
+        it('dispatcher.deleteMessage should be called once', () => {
+            expect((dispatcher.deleteMessage as any).calledOnce).to.be.true;
         });
 
         it('action should be called once', () => {
@@ -172,16 +172,16 @@ describe('NOVA-WORKER -> Worker;', () => {
             }, minInterval * 4);
         });
 
-        it('service.sendMessage should be called once', () => {
-            expect((service.sendMessage as any).calledOnce).to.be.true;
+        it('dispatcher.sendMessage should be called once', () => {
+            expect((dispatcher.sendMessage as any).calledOnce).to.be.true;
         });
 
-        it('service.receiveMessage should be called', () => {
-            expect((service.receiveMessage as any).called).to.be.true;
+        it('dispatcher.receiveMessage should be called', () => {
+            expect((dispatcher.receiveMessage as any).called).to.be.true;
         });
 
-        it('service.deleteMessage should be called twice', () => {
-            expect((service.deleteMessage as any).calledTwice).to.be.true;
+        it('dispatcher.deleteMessage should be called twice', () => {
+            expect((dispatcher.deleteMessage as any).calledTwice).to.be.true;
         });
 
         it('action should be called twice', () => {
@@ -211,16 +211,16 @@ describe('NOVA-WORKER -> Worker;', () => {
             }, minInterval);
         });
 
-        it('service.sendMessage should not be called', () => {
-            expect((service.sendMessage as any).notCalled).to.be.true;
+        it('dispatcher.sendMessage should not be called', () => {
+            expect((dispatcher.sendMessage as any).notCalled).to.be.true;
         });
 
-        it('service.receiveMessage should be called 5 times', () => {
-            expect((service.receiveMessage as any).callCount).to.be.at.least(queueLength);
+        it('dispatcher.receiveMessage should be called 5 times', () => {
+            expect((dispatcher.receiveMessage as any).callCount).to.be.at.least(queueLength);
         });
 
-        it('service.deleteMessage should be called more than 5 times', () => {
-            expect((service.deleteMessage as any).callCount).to.equal(queueLength);
+        it('dispatcher.deleteMessage should be called more than 5 times', () => {
+            expect((dispatcher.deleteMessage as any).callCount).to.equal(queueLength);
         });
 
         it('action should be called 5 times', () => {
@@ -244,16 +244,16 @@ describe('NOVA-WORKER -> Worker;', () => {
             }, minInterval);
         });
 
-        it('service.sendMessage should not be called', () => {
-            expect((service.sendMessage as any).notCalled).to.be.true;
+        it('dispatcher.sendMessage should not be called', () => {
+            expect((dispatcher.sendMessage as any).notCalled).to.be.true;
         });
 
-        it('service.receiveMessage should be called', () => {
-            expect((service.receiveMessage as any).called).to.be.true;
+        it('dispatcher.receiveMessage should be called', () => {
+            expect((dispatcher.receiveMessage as any).called).to.be.true;
         });
 
-        it('service.deleteMessage should be called once', () => {
-            expect((service.deleteMessage as any).calledOnce).to.be.true;
+        it('dispatcher.deleteMessage should be called once', () => {
+            expect((dispatcher.deleteMessage as any).calledOnce).to.be.true;
         });
 
         it('action should be called once', () => {
@@ -277,18 +277,18 @@ describe('NOVA-WORKER -> Worker;', () => {
 
             dao = new MockDao({ startTransaction: true });
             database = { connect: sinon.stub().returns(Promise.resolve(dao)) };
-            service = new MockQueueService([queue, queue1]);
-            queueLength = (service as any).messages.length;
+            dispatcher = new MockDispatcher([queue, queue1]);
+            queueLength = (dispatcher as any).messages.length;
 
             options = {
-                name        : 'testQueueService',
-                queueService: service,
+                name        : 'testQueuedispatcher',
+                dispatcher  : dispatcher,
                 database    : database
             };
 
-            sinon.spy(service, 'sendMessage');
-            sinon.spy(service, 'receiveMessage');
-            sinon.spy(service, 'deleteMessage');
+            sinon.spy(dispatcher, 'sendMessage');
+            sinon.spy(dispatcher, 'receiveMessage');
+            sinon.spy(dispatcher, 'deleteMessage');
 
             worker = createWorker(options);
 
@@ -321,16 +321,16 @@ describe('NOVA-WORKER -> Worker;', () => {
             }, minInterval);
         });
 
-        it('service.sendMessage should not be called', () => {
-            expect((service.sendMessage as any).notCalled).to.be.true;
+        it('dispatcher.sendMessage should not be called', () => {
+            expect((dispatcher.sendMessage as any).notCalled).to.be.true;
         });
 
-        it('service.receiveMessage should be called at least 2 times', () => {
-            expect((service.receiveMessage as any).callCount).to.be.at.least(queueLength);
+        it('dispatcher.receiveMessage should be called at least 2 times', () => {
+            expect((dispatcher.receiveMessage as any).callCount).to.be.at.least(queueLength);
         });
 
-        it('service.deleteMessage should be called twice', () => {
-            expect((service.deleteMessage as any).calledTwice).to.be.true;
+        it('dispatcher.deleteMessage should be called twice', () => {
+            expect((dispatcher.deleteMessage as any).calledTwice).to.be.true;
         });
 
         it('action should be called twice', () => {
@@ -358,7 +358,7 @@ describe('NOVA-WORKER -> Worker;', () => {
         });
     });
 
-    describe('worker should emmit an error when service.receiveMessage return an error;', () => {
+    describe('worker should emmit an error when dispatcher.receiveMessage return an error;', () => {
         before(done => {
             minInterval = 200;
             queue = queueMessages.find(q => q && q.id === '1');
@@ -366,24 +366,24 @@ describe('NOVA-WORKER -> Worker;', () => {
 
             dao = new MockDao({ startTransaction: true });
             database = { connect: sinon.stub().returns(Promise.resolve(dao)) };
-            service = new MockQueueService([queue1, queue]);
-            queueLength = (service as any).messages.length;
+            dispatcher = new MockDispatcher([queue1, queue]);
+            queueLength = (dispatcher as any).messages.length;
 
-            service.receiveMessage = function (queue: string, callback: (error: Error, message: QueueMessage) => void) {
+            dispatcher.receiveMessage = function (queue: string, callback: (error: Error, message: QueueMessage) => void) {
                 let msg = this.messages[0];
                 if (msg) msg.received += 1;
                 callback(msg.id === '2' ? new Error(): undefined, msg);
             };
 
             options = {
-                name        : 'testQueueService',
-                queueService: service,
+                name        : 'testQueuedispatcher',
+                dispatcher  : dispatcher,
                 database    : database
             };
 
-            sinon.spy(service, 'sendMessage');
-            sinon.spy(service, 'receiveMessage');
-            sinon.spy(service, 'deleteMessage');
+            sinon.spy(dispatcher, 'sendMessage');
+            sinon.spy(dispatcher, 'receiveMessage');
+            sinon.spy(dispatcher, 'deleteMessage');
 
             worker = createWorker(options);
 
@@ -416,16 +416,16 @@ describe('NOVA-WORKER -> Worker;', () => {
             }, minInterval * 3);
         });
 
-        it('service.sendMessage should not be called', () => {
-            expect((service.sendMessage as any).notCalled).to.be.true;
+        it('dispatcher.sendMessage should not be called', () => {
+            expect((dispatcher.sendMessage as any).notCalled).to.be.true;
         });
 
-        it('service.receiveMessage should be called at least 2 times', () => {
-            expect((service.receiveMessage as any).callCount).to.be.at.least(queueLength);
+        it('dispatcher.receiveMessage should be called at least 2 times', () => {
+            expect((dispatcher.receiveMessage as any).callCount).to.be.at.least(queueLength);
         });
 
-        it('service.deleteMessage should not be called', () => {
-            expect((service.deleteMessage as any).notCalled).to.be.true;
+        it('dispatcher.deleteMessage should not be called', () => {
+            expect((dispatcher.deleteMessage as any).notCalled).to.be.true;
         });
 
         it('action should not be called', () => {
@@ -453,18 +453,18 @@ function createAndStartWorker(messages: QueueMessage[], minInt: number, callback
 
     dao = new MockDao({ startTransaction: true });
     database = { connect: sinon.stub().returns(Promise.resolve(dao)) };
-    service = new MockQueueService(messages);
-    queueLength = (service as any).messages.length;
+    dispatcher = new MockDispatcher(messages);
+    queueLength = (dispatcher as any).messages.length;
 
     options = {
-        name        : 'testQueueService',
-        queueService: service,
+        name        : 'testQueuedispatcher',
+        dispatcher  : dispatcher,
         database    : database
     };
 
-    sinon.spy(service, 'sendMessage');
-    sinon.spy(service, 'receiveMessage');
-    sinon.spy(service, 'deleteMessage');
+    sinon.spy(dispatcher, 'sendMessage');
+    sinon.spy(dispatcher, 'receiveMessage');
+    sinon.spy(dispatcher, 'deleteMessage');
 
     worker = createWorker(options);
 
@@ -491,6 +491,6 @@ function createAndStartWorker(messages: QueueMessage[], minInt: number, callback
 
 function addQueue(timeout: number, data: any) {
     setTimeout(() => {
-        service.sendMessage(queueName, data);
+        dispatcher.sendMessage(queueName, data);
     }, timeout);
 }

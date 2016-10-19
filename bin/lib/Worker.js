@@ -21,7 +21,7 @@ class Worker extends events.EventEmitter {
         options = validateOptions(options);
         // initialize basic instance variables
         this.name = options.name;
-        this.client = options.queueService;
+        this.dispatcher = options.dispatcher;
         this.logger = options.logger;
         this.handlers = new Map();
         // initialize executor context
@@ -73,7 +73,7 @@ class Worker extends events.EventEmitter {
         const executor = new nova.Executor(this.context, config.action, config.adapter, options);
         // build and register the handler
         const handler = new TaskHandler_1.TaskHandler({
-            client: this.client,
+            dispatcher: this.dispatcher,
             queue: queue,
             retrieval: Object.assign({}, index_1.defaults.RETRIEVAL, config.retrieval),
             executor: executor,
@@ -94,14 +94,8 @@ function validateOptions(options) {
         throw new TypeError('Cannot create a worker: name is undefined');
     if (typeof options.name !== 'string' || options.name.trim().length === 0)
         throw new TypeError('Cannot create a worker: name must be a non-empty string');
-    if (!options.queueService)
-        throw new TypeError('Cannot create a worker: queue service is undefined');
-    if (typeof options.queueService.sendMessage !== 'function')
-        throw new TypeError('Cannot create a worker: queue service is invalid');
-    if (typeof options.queueService.receiveMessage !== 'function')
-        throw new TypeError('Cannot create a worker: queue service is invalid');
-    if (typeof options.queueService.deleteMessage !== 'function')
-        throw new TypeError('Cannot create a worker: queue service is invalid');
+    if (!options.dispatcher)
+        throw new TypeError('Cannot create a worker: dispatcher is undefined');
     return options;
 }
 //# sourceMappingURL=Worker.js.map

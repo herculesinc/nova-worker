@@ -3,7 +3,7 @@
 import { isError } from 'util';
 import * as nova from 'nova-base';
 import * as toobusy from 'toobusy-js';
-import { QueueService, QueueMessage, WorkerError, TaskRetrievalOptions } from './util';
+import { WorkerError, TaskRetrievalOptions } from './util';
 
 // MODULE VARIABLES
 // =================================================================================================
@@ -12,7 +12,7 @@ const since = nova.util.since;
 // ENUMS AND INTERFACES
 // =================================================================================================
 export interface HandlerOptions {
-    client      : QueueService;
+    dispatcher  : nova.Dispatcher;
     queue       : string;
     retrieval   : TaskRetrievalOptions;
     executor    : nova.Executor<any,any>;
@@ -28,7 +28,7 @@ const enum TaskHandlerStatus {
 // =================================================================================================
 export class TaskHandler {
 
-    client      : QueueService;
+    dispatcher  : nova.Dispatcher;
     queue       : string;
     retrieval   : TaskRetrievalOptions;
 
@@ -43,7 +43,7 @@ export class TaskHandler {
     // --------------------------------------------------------------------------------------------
     constructor(options: HandlerOptions) {
 
-        this.client = options.client;
+        this.dispatcher = options.dispatcher;
         this.queue = options.queue;
         this.retrieval = options.retrieval;
 
@@ -104,7 +104,7 @@ export class TaskHandler {
     private checkQueue() {
         const start = process.hrtime();
 
-        this.client.receiveMessage(this.queue, (error, message) => {
+        this.dispatcher.receiveMessage(this.queue, (error, message) => {
 
             if (error) {
                 this.onerror(new WorkerError(`Failed to retrieve a task from '${this.queue}' queue`, error));
@@ -164,8 +164,8 @@ export class TaskHandler {
         }
 	}
 
-    private deleteMessage(message: QueueMessage) {
-        this.client.deleteMessage(message, (error) => {
+    private deleteMessage(message: nova.QueueMessage) {
+        this.dispatcher.deleteMessage(message, (error) => {
             if (error) {
                 this.onerror(new WorkerError(`Failed to delete a task from '${this.queue}' queue`, error));
             }

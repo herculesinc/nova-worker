@@ -10,14 +10,13 @@ declare module "nova-worker" {
     // WORKER
     // --------------------------------------------------------------------------------------------
     export interface WorkerConfig {
-        name            : string;
-        queueService    : QueueService;        
-        database        : nova.Database;
-        cache?          : nova.Cache;
-        dispatcher?     : nova.Dispatcher;
-        notifier?       : nova.Notifier;
-        logger?         : nova.Logger;
-        settings?       : any;
+        name        : string;
+        dispatcher  : nova.Dispatcher;        
+        database    : nova.Database;
+        cache?      : nova.Cache;
+        notifier?   : nova.Notifier;
+        logger?     : nova.Logger;
+        settings?   : any;
     }
 
     export interface Worker extends events.EventEmitter {
@@ -46,26 +45,6 @@ declare module "nova-worker" {
         minInterval?: number;
         maxInterval?: number;
         maxRetries?	: number;
-    }
-
-    // QUEUE SERVICE
-    // --------------------------------------------------------------------------------------------
-    export interface QueueMessage {
-        id          : string;
-        payload     : any;
-        received    : number;
-        sentOn      : number;
-    }
-
-    export interface MessageOptions {
-        delay?      : number;
-        ttl?        : number;
-    }
-
-    export interface QueueService {
-        sendMessage(queue: string, payload: any, options?: MessageOptions, callback?: (error: Error) => void);
-        receiveMessage(queue: string, callback: (error: Error, message: QueueMessage) => void);
-        deleteMessage(message: QueueMessage, callback: (error?: Error) => void);
     }
 
     // LOAD CONTROLLER

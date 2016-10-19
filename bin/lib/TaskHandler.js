@@ -12,7 +12,7 @@ class TaskHandler {
     // CONSTRUCTOR
     // --------------------------------------------------------------------------------------------
     constructor(options) {
-        this.client = options.client;
+        this.dispatcher = options.dispatcher;
         this.queue = options.queue;
         this.retrieval = options.retrieval;
         this.executor = options.executor;
@@ -63,7 +63,7 @@ class TaskHandler {
     // --------------------------------------------------------------------------------------------
     checkQueue() {
         const start = process.hrtime();
-        this.client.receiveMessage(this.queue, (error, message) => {
+        this.dispatcher.receiveMessage(this.queue, (error, message) => {
             if (error) {
                 this.onerror(new util_1.WorkerError(`Failed to retrieve a task from '${this.queue}' queue`, error));
                 return this.setNextCheck();
@@ -112,7 +112,7 @@ class TaskHandler {
         }
     }
     deleteMessage(message) {
-        this.client.deleteMessage(message, (error) => {
+        this.dispatcher.deleteMessage(message, (error) => {
             if (error) {
                 this.onerror(new util_1.WorkerError(`Failed to delete a task from '${this.queue}' queue`, error));
             }
