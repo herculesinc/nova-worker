@@ -1,7 +1,7 @@
 "use strict";
-const nova = require('nova-base');
-const toobusy = require('toobusy-js');
-const util_1 = require('./util');
+const nova = require("nova-base");
+const toobusy = require("toobusy-js");
+const util_1 = require("./util");
 // MODULE VARIABLES
 // =================================================================================================
 const since = nova.util.since;

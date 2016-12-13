@@ -96,7 +96,7 @@ export class TaskHandler {
                     }, this.retrieval.maxInterval);
                 }
             }, this.retrieval.maxInterval);
-        });
+        }) as Promise<any>;
     }
 
     // PRIVATE METHODS

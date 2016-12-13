@@ -1,11 +1,11 @@
 "use strict";
 // IMPORTS
 // =================================================================================================
-const events = require('events');
-const toobusy = require('toobusy-js');
-const nova = require('nova-base');
-const TaskHandler_1 = require('./TaskHandler');
-const index_1 = require('./../index');
+const events = require("events");
+const toobusy = require("toobusy-js");
+const nova = require("nova-base");
+const TaskHandler_1 = require("./TaskHandler");
+const index_1 = require("./../index");
 // MODULE VARIABLES
 // =================================================================================================
 const ERROR_EVENT = 'error';

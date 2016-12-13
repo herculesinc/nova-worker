@@ -1,8 +1,8 @@
 "use strict";
 // IMPORTS
 // ================================================================================================
-const toobusy = require('toobusy-js');
-const Worker_1 = require('./lib/Worker');
+const toobusy = require("toobusy-js");
+const Worker_1 = require("./lib/Worker");
 // MODULE VARIABLES
 // =================================================================================================
 exports.defaults = {
@@ -34,7 +34,7 @@ function configure(setting, config) {
 exports.configure = configure;
 // RE-EXPORTS
 // =================================================================================================
-var nova_base_1 = require('nova-base');
+var nova_base_1 = require("nova-base");
 exports.validate = nova_base_1.validate;
 exports.Exception = nova_base_1.Exception;
 exports.util = nova_base_1.util;

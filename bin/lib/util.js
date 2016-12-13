@@ -1,7 +1,7 @@
 "use strict";
 // IMPORTS
 // =================================================================================================
-const nova_base_1 = require('nova-base');
+const nova_base_1 = require("nova-base");
 // ERRORS
 // =================================================================================================
 class WorkerError extends nova_base_1.Exception {
