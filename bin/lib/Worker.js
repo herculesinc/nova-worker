@@ -25,6 +25,7 @@ class Worker extends events.EventEmitter {
         this.dispatcher = options.dispatcher;
         this.logger = options.logger;
         this.handlers = new Map();
+        this.poisonQueue = options.poisonQueue;
         // initialize executor context
         this.context = {
             database: options.database,
