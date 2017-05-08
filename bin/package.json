@@ -1,6 +1,6 @@
 {
   "name": "nova-worker",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Worker for Nova API framework",
   "keywords": [
     "nova",
