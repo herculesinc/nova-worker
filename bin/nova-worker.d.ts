@@ -10,13 +10,14 @@ declare module "nova-worker" {
     // WORKER
     // --------------------------------------------------------------------------------------------
     export interface WorkerConfig {
-        name        : string;
-        dispatcher  : nova.Dispatcher;        
-        database    : nova.Database;
-        cache?      : nova.Cache;
-        notifier?   : nova.Notifier;
-        logger?     : nova.Logger;
-        settings?   : any;
+        name            : string;
+        dispatcher      : nova.Dispatcher;        
+        database        : nova.Database;
+        cache?          : nova.Cache;
+        notifier?       : nova.Notifier;
+        logger?         : nova.Logger;
+        settings?       : any;
+        poisonQueue?    : string;
     }
 
     export interface Worker extends events.EventEmitter {

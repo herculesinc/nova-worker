@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 // IMPORTS
 // =================================================================================================
 const nova_base_1 = require("nova-base");

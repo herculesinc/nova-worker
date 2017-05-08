@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const nova = require("nova-base");
 const toobusy = require("toobusy-js");
 const util_1 = require("./util");
@@ -14,6 +15,7 @@ class TaskHandler {
     constructor(options) {
         this.dispatcher = options.dispatcher;
         this.queue = options.queue;
+        this.poisonQueue = options.poisonQueue;
         this.retrieval = options.retrieval;
         this.executor = options.executor;
         this.logger = options.logger;
@@ -75,10 +77,10 @@ class TaskHandler {
             this.logger && this.logger.debug(`Retrieved a task from '${this.queue}' queue`);
             // immediately check for the next message
             this.setNextCheck(true);
-            // if the message has been retrieved too many times, just delete it
+            // if the message has been retrieved too many times, deleted from the queue and add it to the poison queue
             if (message.received > this.retrieval.maxRetries) {
                 this.logger && this.logger.debug(`Deleting a task from '${this.queue}' queue after ${message.received - 1} unsuccessful attempts`);
-                return this.deleteMessage(message);
+                return this.deleteMessage(message, true);
             }
             // execute the action, and remove the message from the queue if all went well
             this.executor.execute(message.payload).then(() => {
@@ -111,12 +113,19 @@ class TaskHandler {
             }
         }
     }
-    deleteMessage(message) {
+    deleteMessage(message, moveToPoisonQueue = false) {
         this.dispatcher.deleteMessage(message, (error) => {
             if (error) {
                 this.onerror(new util_1.WorkerError(`Failed to delete a task from '${this.queue}' queue`, error));
             }
             else {
+                if (moveToPoisonQueue && this.poisonQueue) {
+                    this.dispatcher.sendMessage(this.poisonQueue, { source: this.queue, payload: message.payload }, (error) => {
+                        if (error) {
+                            this.onerror(new util_1.WorkerError(`Failed to move a task from '${this.queue}' queue to poison queue`, error));
+                        }
+                    });
+                }
                 this.logger && this.logger.debug(`Deleted a task from '${this.queue}' queue`);
             }
         });

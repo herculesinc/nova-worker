@@ -14,6 +14,7 @@ const since = nova.util.since;
 export interface HandlerOptions {
     dispatcher  : nova.Dispatcher;
     queue       : string;
+    poisonQueue : string;
     retrieval   : TaskRetrievalOptions;
     executor    : nova.Executor<any,any>;
     logger      : nova.Logger;
@@ -31,6 +32,7 @@ export class TaskHandler {
     dispatcher  : nova.Dispatcher;
     queue       : string;
     retrieval   : TaskRetrievalOptions;
+    poisonQueue : string;
 
     executor    : nova.Executor<any,any>;
     logger?     : nova.Logger;
@@ -45,6 +47,7 @@ export class TaskHandler {
 
         this.dispatcher = options.dispatcher;
         this.queue = options.queue;
+        this.poisonQueue = options.poisonQueue;
         this.retrieval = options.retrieval;
 
         this.executor = options.executor;
@@ -121,10 +124,10 @@ export class TaskHandler {
             // immediately check for the next message
             this.setNextCheck(true);
 
-            // if the message has been retrieved too many times, just delete it
+            // if the message has been retrieved too many times, deleted from the queue and add it to the poison queue
             if (message.received > this.retrieval.maxRetries) {
                 this.logger && this.logger.debug(`Deleting a task from '${this.queue}' queue after ${message.received - 1} unsuccessful attempts`);
-                return this.deleteMessage(message);
+                return this.deleteMessage(message, true);
             }
 
             // execute the action, and remove the message from the queue if all went well
@@ -164,12 +167,19 @@ export class TaskHandler {
         }
 	}
 
-    private deleteMessage(message: nova.QueueMessage) {
+    private deleteMessage(message: nova.QueueMessage, moveToPoisonQueue = false) {
         this.dispatcher.deleteMessage(message, (error) => {
             if (error) {
                 this.onerror(new WorkerError(`Failed to delete a task from '${this.queue}' queue`, error));
             }
             else {
+                if (moveToPoisonQueue && this.poisonQueue) {
+                    this.dispatcher.sendMessage(this.poisonQueue, { source: this.queue, payload: message.payload }, (error) => {
+                        if (error) {
+                            this.onerror(new WorkerError(`Failed to move a task from '${this.queue}' queue to poison queue`, error));
+                        }
+                    });
+                }
                 this.logger && this.logger.debug(`Deleted a task from '${this.queue}' queue`);
             }
         });

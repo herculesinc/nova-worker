@@ -22,6 +22,7 @@ export interface WorkerConfig {
     notifier?       : nova.Notifier;
     logger?         : nova.Logger;
     settings?       : any;
+    poisonQueue?    : string;
 }
 
 export interface TaskHandlerConfig<V,T> {
@@ -41,6 +42,7 @@ export class Worker extends events.EventEmitter {
     logger      : nova.Logger;
     context     : nova.ExecutorContext;
     handlers    : Map<string, TaskHandler>;
+    poisonQueue : string;
 
     // CONSTRUCTOR
     // --------------------------------------------------------------------------------------------
@@ -111,6 +113,7 @@ export class Worker extends events.EventEmitter {
         const handler = new TaskHandler({
             dispatcher  : this.dispatcher,
             queue       : queue,
+            poisonQueue : this.poisonQueue,
             retrieval   : Object.assign({}, defaults.RETRIEVAL, config.retrieval),
             executor    : executor,
             logger      : this.logger,

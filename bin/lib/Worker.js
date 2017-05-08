@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 // IMPORTS
 // =================================================================================================
 const events = require("events");
@@ -75,6 +76,7 @@ class Worker extends events.EventEmitter {
         const handler = new TaskHandler_1.TaskHandler({
             dispatcher: this.dispatcher,
             queue: queue,
+            poisonQueue: this.poisonQueue,
             retrieval: Object.assign({}, index_1.defaults.RETRIEVAL, config.retrieval),
             executor: executor,
             logger: this.logger,
