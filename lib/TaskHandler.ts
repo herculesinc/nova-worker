@@ -174,7 +174,7 @@ export class TaskHandler {
             }
             else {
                 if (moveToPoisonQueue && this.poisonQueue) {
-                    this.dispatcher.sendMessage(this.poisonQueue, { source: this.queue, payload: message.payload }, (error) => {
+                    this.dispatcher.sendMessage(this.poisonQueue, { source: this.queue, payload: message.payload }, undefined, (error) => {
                         if (error) {
                             this.onerror(new WorkerError(`Failed to move a task from '${this.queue}' queue to poison queue`, error));
                         }
