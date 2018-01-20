@@ -1,6 +1,6 @@
 {
   "name": "nova-worker",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Worker for Nova API framework",
   "keywords": [
     "nova",
@@ -20,10 +20,10 @@
     "url": "https://github.com/herculesinc/nova-worker.git"
   },
   "engines": {
-    "node": "8.9.x"
+    "node": "6.11.x"
   },
   "dependencies": {
-    "nova-base": "0.8.x",
+    "nova-base": "0.8.0",
     "toobusy-js": "0.5.x"
   },
   "devDependencies": {
